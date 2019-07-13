@@ -1,18 +1,18 @@
 (ns ^{:doc "org-file to markdown file converter
 
-org2mds.clj parses org-file's top level headings and their content to separate notes 
+org2mds.clj parses org-file's top level headings and their content to separate notes
 and writes them to separate files in current directory.
 org-file's top level headings should be formatted like this:
 '* some heading title <yyyy-MM-dd EEE kk:mm>'
 
-usage: 
+usage:
 % lein-exec org2mds.clj <org-file> "}
  org2mds
   (:require [clojure.string :as str])
   (:require [clojure.java.io :as io])
   (:import java.text.SimpleDateFormat))
 
-(def re-title (re-pattern "^\\* (.*) <(\\d{4}?-\\d\\d-\\d\\d ... \\d\\d:\\d\\d)>$"))
+(def re-title (re-pattern "^\\* (.*)<(\\d{4}?-\\d\\d-\\d\\d ... \\d\\d:\\d\\d)>\\s*$"))
 (def datefmt (SimpleDateFormat. "yyyy-MM-dd EEE kk:mm"))
 
 (defn add-note
@@ -60,9 +60,9 @@ usage:
     (spit fname (apply str (map #(str % "\n") (:content note))))
     (.setLastModified (io/file fname) time)))
 
-(defn run []
+(defn run [fname]
   (try
-    (if-let [org-file (second *command-line-args*)]
+    (if-let [org-file fname]
       (let [notes (parse-notes org-file)]
         (println "converting" (count notes) "notes found in" org-file ":")
         (doseq [note notes]
@@ -71,4 +71,7 @@ usage:
       (println "usage: give org file as argument"))
     (catch Exception e (println "Error:" (.getMessage e)))))
 
-(run)
+(run (second *command-line-args*))
+
+(comment
+  (run "notes.org"))
