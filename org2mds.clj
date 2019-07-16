@@ -6,7 +6,7 @@ org-file's top level headings should be formatted like this:
 '* some heading title <yyyy-MM-dd EEE kk:mm>'
 
 usage:
-% lein-exec org2mds.clj <org-file> "}
+% clj -m org2mds <org-file> "}
  org2mds
   (:require [clojure.string :as s])
   (:require [clojure.java.io :as io])
@@ -18,7 +18,7 @@ usage:
 (defn parse-notes
   "parse org notes and return them as seq"
   [fname]
-  (let [data (clojure.core/str "\n" (s/triml (slurp fname)))
+  (let [data (str "\n" (s/triml (slurp fname)))
         notes (s/split data #"\n\* ")]
     (for [note (rest notes)
           :let [[_ title date] (re-find re-title note)]]
@@ -42,18 +42,13 @@ usage:
     (spit fname (str "# " (:title note) "\n" (:date note) "\n\n" (:content note)))
     (.setLastModified (io/file fname) time)))
 
-(defn run [fname]
-  (try
-    (if-let [org-file fname]
-      (let [notes (parse-notes org-file)]
-        (println "converting" (count notes) "notes found in" org-file ":")
-        (doseq [note notes]
-          (println "  " (:title note))
-          (write-note note)))
-      (println "usage: give org file as argument"))
-    (catch Exception e (println "Error:" (.getMessage e)))))
-
-(run (second *command-line-args*))
-
-(comment
-  (run "notes.org"))
+(defn -main
+  ([] (println "Usage: clj -m org2mds <orgfile>"))
+  ([org-file]
+   (try
+     (let [notes (parse-notes org-file)]
+       (println "converting" (count notes) "notes found in" org-file ":")
+       (doseq [note notes]
+         (println "  " (:title note))
+         (write-note note)))
+     (catch Exception e (println "Error:" (.getMessage e))))))
